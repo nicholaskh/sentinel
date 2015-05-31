@@ -1,0 +1,12 @@
+{
+	services: [
+		{
+			cmd: "ping"
+			target: "www.baidu.com:80"
+			interval: "10s"
+			retry: 3
+			retry_interval: "1s"
+			read_timeout: "2s"
+		},
+	]
+}
