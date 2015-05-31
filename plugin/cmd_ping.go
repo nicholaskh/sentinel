@@ -27,28 +27,17 @@ type PingCommand struct {
 	retryInterval time.Duration
 	readTimeout   time.Duration
 	listenPort    int
-	listenConn    *net.UDPConn
 }
 
 func (this *PingCommand) Init(config *config.ServiceConfig) {
 	this.target = config.Target
 	this.interval = config.Interval
-	this.listenPort = config.ListenPort
 	this.retryTimes = config.Retry
 	this.retryInterval = config.RetryInterval
 	this.readTimeout = config.ReadTimeout
 }
 
 func (this *PingCommand) Start() {
-	var err error
-	this.listenConn, err = net.ListenUDP("udp4", &net.UDPAddr{
-		IP:   net.IPv4(0, 0, 0, 0),
-		Port: this.listenPort,
-	})
-	if err != nil {
-		panic(err)
-	}
-
 	for {
 		select {
 		case <-time.Tick(this.interval):
@@ -77,9 +66,9 @@ func (this *PingCommand) ping() (success bool) {
 	}
 	conn.Write([]byte(PACKET_PING))
 
+	conn.SetReadDeadline(time.Now().Add(this.readTimeout))
 	data := make([]byte, 256)
-	this.listenConn.SetReadDeadline(time.Now().Add(this.readTimeout))
-	read, _, err := this.listenConn.ReadFromUDP(data)
+	read, err := conn.Read(data)
 	if err != nil {
 		log.Warn("read from target[%s] error, %s", this.target, err.Error())
 		return false
