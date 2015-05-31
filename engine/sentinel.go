@@ -1,7 +1,8 @@
 package engine
 
 import (
-	log "github.com/nicholaskh/log4go"
+	"fmt"
+
 	"github.com/nicholaskh/sentinel/config"
 )
 
@@ -20,8 +21,7 @@ func (this *Sentinel) RunForever() {
 	for _, service := range this.config.Services {
 		pluginCreator, exists := availablePlugins[service.Command]
 		if !exists {
-			log.Error("Unknown command[%s] found in service[%s]", service.Command, service.Name)
-			continue
+			panic(fmt.Sprintf("Unknown command[%s] target[%s]", service.Command, service.Target))
 		}
 		plugin := pluginCreator()
 		plugin.Init(service)

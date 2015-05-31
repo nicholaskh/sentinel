@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	availablePlugins map[string]func() Plugin
+	availablePlugins map[string]func() Plugin = make(map[string]func() Plugin)
 )
 
 type Plugin interface {

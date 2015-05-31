@@ -12,6 +12,7 @@ import (
 	log "github.com/nicholaskh/log4go"
 	"github.com/nicholaskh/sentinel/config"
 	"github.com/nicholaskh/sentinel/engine"
+	_ "github.com/nicholaskh/sentinel/plugin"
 )
 
 var (

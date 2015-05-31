@@ -15,25 +15,33 @@ const (
 )
 
 func init() {
-	engine.RegisterPlugin("cmd_ping", func() engine.Plugin {
+	engine.RegisterPlugin("ping", func() engine.Plugin {
 		return new(PingCommand)
 	})
 }
 
 type PingCommand struct {
-	target     string
-	interval   time.Duration
-	listenPort int
+	target        string
+	interval      time.Duration
+	retryTimes    int
+	retryInterval time.Duration
+	readTimeout   time.Duration
+	listenPort    int
+	listenConn    *net.UDPConn
 }
 
 func (this *PingCommand) Init(config *config.ServiceConfig) {
 	this.target = config.Target
 	this.interval = config.Interval
 	this.listenPort = config.ListenPort
+	this.retryTimes = config.Retry
+	this.retryInterval = config.RetryInterval
+	this.readTimeout = config.ReadTimeout
 }
 
 func (this *PingCommand) Start() {
-	socket, err := net.ListenUDP("udp4", &net.UDPAddr{
+	var err error
+	this.listenConn, err = net.ListenUDP("udp4", &net.UDPAddr{
 		IP:   net.IPv4(0, 0, 0, 0),
 		Port: this.listenPort,
 	})
@@ -44,23 +52,55 @@ func (this *PingCommand) Start() {
 	for {
 		select {
 		case <-time.Tick(this.interval):
-			conn, err := net.DialTimeout("udp", this.target, time.Second*10)
-			if err != nil {
-				log.Warn("dial target[%s] error: %s", this.target, err.Error())
+			var success bool
+			log.Info("ping %s", this.target)
+			if success = this.ping(); !success {
+				time.Sleep(this.retryInterval)
+				success = this.retry(0)
 			}
-			conn.Write([]byte(PACKET_PING))
 
-			data := make([]byte, 256)
-			read, _, err := socket.ReadFromUDP(data)
-			if err != nil {
-				log.Warn("read from target[%s] error, %s", this.target, err.Error())
-				// TODO retry
-			}
-			pong := string(data[:read])
-			if pong != PACKET_PONG {
-				log.Warn("pong packet error: give %s, expected %s", pong, PACKET_PONG)
-				// TODO retry
+			if success {
+				log.Info("ping %s success", this.target)
+			} else {
+				log.Info("ping %s fail", this.target)
+				// TODO -- alarm
 			}
 		}
 	}
+}
+
+func (this *PingCommand) ping() (success bool) {
+	conn, err := net.DialTimeout("udp", this.target, time.Second*10)
+	if err != nil {
+		log.Warn("dial target[%s] error: %s", this.target, err.Error())
+		return false
+	}
+	conn.Write([]byte(PACKET_PING))
+
+	data := make([]byte, 256)
+	this.listenConn.SetReadDeadline(time.Now().Add(this.readTimeout))
+	read, _, err := this.listenConn.ReadFromUDP(data)
+	if err != nil {
+		log.Warn("read from target[%s] error, %s", this.target, err.Error())
+		return false
+	}
+	pong := string(data[:read])
+	if pong != PACKET_PONG {
+		log.Warn("pong packet error: give %s, expected %s", pong, PACKET_PONG)
+		return false
+	}
+	return true
+}
+
+func (this *PingCommand) retry(retried int) bool {
+	retried++
+	log.Info("retry %d", retried)
+	if retried >= this.retryTimes {
+		return false
+	}
+	if !this.ping() {
+		time.Sleep(this.retryInterval)
+		return this.retry(retried)
+	}
+	return true
 }
