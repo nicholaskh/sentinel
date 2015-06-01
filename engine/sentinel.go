@@ -25,6 +25,6 @@ func (this *Sentinel) RunForever() {
 		}
 		plugin := pluginCreator()
 		plugin.Init(service)
-		plugin.Start()
+		go plugin.Start()
 	}
 }
