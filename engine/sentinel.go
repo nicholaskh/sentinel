@@ -27,4 +27,6 @@ func (this *Sentinel) RunForever() {
 		plugin.Init(service)
 		go plugin.Start()
 	}
+
+	<-make(chan interface{})
 }
