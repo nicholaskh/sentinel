@@ -21,12 +21,13 @@ func init() {
 }
 
 type PingCommand struct {
-	target        string
-	interval      time.Duration
-	retryTimes    int
-	retryInterval time.Duration
-	readTimeout   time.Duration
-	listenPort    int
+	target              string
+	interval            time.Duration
+	retryTimes          int
+	retryInterval       time.Duration
+	readTimeout         time.Duration
+	listenPort          int
+	notificationPlugins []engine.NotificationPlugin
 }
 
 func (this *PingCommand) Init(config *config.ServiceConfig) {
@@ -35,6 +36,10 @@ func (this *PingCommand) Init(config *config.ServiceConfig) {
 	this.retryTimes = config.Retry
 	this.retryInterval = config.RetryInterval
 	this.readTimeout = config.ReadTimeout
+}
+
+func (this *PingCommand) SetNotificationPlugins(notificationPlugins []engine.NotificationPlugin) {
+	this.notificationPlugins = notificationPlugins
 }
 
 func (this *PingCommand) Start() {
@@ -51,8 +56,10 @@ func (this *PingCommand) Start() {
 			if success {
 				log.Info("ping %s success", this.target)
 			} else {
-				log.Info("ping %s fail", this.target)
-				// TODO -- alarm
+				log.Warn("ping %s fail", this.target)
+				for _, np := range this.notificationPlugins {
+					np.Notify()
+				}
 			}
 		}
 	}

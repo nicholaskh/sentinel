@@ -19,13 +19,31 @@ func NewSentinel(config *config.SentinelConfig) *Sentinel {
 
 func (this *Sentinel) RunForever() {
 	for _, service := range this.config.Services {
+		notificationPlugins := make([]NotificationPlugin, 0)
+		for _, notificationCmd := range service.NotificationCmds {
+			notificationPluginCreator, exists := availablePlugins[notificationCmd.Cmd]
+			if !exists {
+				panic(fmt.Sprintf("Unknown notification command[%s] in target[%s]", notificationCmd.Cmd, service.Target))
+			}
+			notificationPlugin, ok := notificationPluginCreator().(NotificationPlugin)
+			if !ok {
+				panic(fmt.Sprintf("Invalid cmd plugin: %s", notificationCmd.Cmd))
+			}
+			notificationPlugin.Init(notificationCmd, service)
+			go notificationPlugin.Start()
+			notificationPlugins = append(notificationPlugins, notificationPlugin)
+		}
 		pluginCreator, exists := availablePlugins[service.Command]
 		if !exists {
-			panic(fmt.Sprintf("Unknown command[%s] target[%s]", service.Command, service.Target))
+			panic(fmt.Sprintf("Unknown command[%s] in target[%s]", service.Command, service.Target))
 		}
-		plugin := pluginCreator()
-		plugin.Init(service)
-		go plugin.Start()
+		cmdPlugin, ok := pluginCreator().(CmdPlugin)
+		if !ok {
+			panic(fmt.Sprintf("Invalid cmd plugin: %s", service.Command))
+		}
+		cmdPlugin.Init(service)
+		cmdPlugin.SetNotificationPlugins(notificationPlugins)
+		go cmdPlugin.Start()
 	}
 
 	<-make(chan interface{})

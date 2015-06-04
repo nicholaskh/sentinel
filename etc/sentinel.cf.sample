@@ -1,12 +1,19 @@
 {
 	services: [
 		{
+			name: "Piped"
 			cmd: "ping"
-			target: "www.baidu.com:80"
-			interval: "10s"
+			target: "127.0.0.1:14570"
+			interval: "2m"
 			retry: 3
 			retry_interval: "1s"
 			read_timeout: "2s"
+            notification_cmds: [
+				{
+					cmd: "email"
+					notifiers: ["zhangkaihong3@wanda.cn"]
+				}
+			]
 		},
 	]
 }
