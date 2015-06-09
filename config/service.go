@@ -21,7 +21,7 @@ type ServiceConfig struct {
 	NotificationCmds []*NotificationConfig
 }
 
-func (this *ServiceConfig) LoadConfig(cf *conf.Conf) {
+func (this *ServiceConfig) LoadConfig(cf *conf.Conf, notifications []*NotificationConfig) {
 	this.Name = cf.String("name", "")
 
 	this.Command = cf.String("cmd", "")
@@ -33,20 +33,24 @@ func (this *ServiceConfig) LoadConfig(cf *conf.Conf) {
 	this.ReadTimeout = cf.Duration("read_timeout", time.Second*2)
 
 	this.NotificationCmds = make([]*NotificationConfig, 0)
-	for i, _ := range cf.List("notification_cmds", []interface{}{}) {
-		notification := new(NotificationConfig)
-		section, err := cf.Section(fmt.Sprintf("notification_cmds[%d]", i))
-		if err != nil {
-			panic(err)
+	for _, cmd := range cf.StringList("notification_cmds", []string{}) {
+		found := false
+		for _, not := range notifications {
+			if cmd == not.Name {
+				this.NotificationCmds = append(this.NotificationCmds, not)
+				found = true
+				break
+			}
 		}
-		notification.LoadConfig(section)
-		this.NotificationCmds = append(this.NotificationCmds, notification)
+		if !found {
+			panic(fmt.Sprintf("Notification cmd name not valid: %s", cmd))
+		}
 	}
 
 	if this.Name == "" ||
 		this.Command == "" ||
 		this.Target == "" ||
-		this.NotificationCmds == nil {
+		len(this.NotificationCmds) == 0 {
 		panic("Service config incomplete")
 	}
 }

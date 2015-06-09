@@ -8,12 +8,15 @@
 			retry: 3
 			retry_interval: "1s"
 			read_timeout: "2s"
-            notification_cmds: [
-				{
-					cmd: "email"
-					notifiers: ["zhangkaihong3@wanda.cn"]
-				}
-			]
+           			notification_cmds: ["email_developer"]
+		},
+	]
+	
+	notifications: [
+		{
+			name: "email_developer"
+			cmd: "email"
+			notifiers: ["zhangkaihong3@wanda.cn"]
 		},
 	]
 }
