@@ -39,7 +39,7 @@ func init() {
 
 	if options.lockFile != "" {
 		if locking.InstanceLocked(options.lockFile) {
-			fmt.Fprintf(os.Stderr, "Another actor is running, exit...\n")
+			fmt.Fprintf(os.Stderr, "Another sentinel is running, exit...\n")
 			os.Exit(1)
 		}
 
