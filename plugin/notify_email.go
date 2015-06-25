@@ -38,10 +38,9 @@ func (this *EmailNotification) Start() {
 }
 
 func (this *EmailNotification) sendMail() error {
-	log.Info("send mail")
-	user := "zhangkh.3@163.com"
-	password := "19871013aA"
-	host := "smtp.163.com:25"
+	user := this.config.User
+	password := this.config.Pwd
+	server := this.config.Server
 
 	subject := fmt.Sprintf("【ALERT】%s[%s] Down", this.serviceConfig.Name, this.serviceConfig.Target)
 
@@ -56,12 +55,12 @@ func (this *EmailNotification) sendMail() error {
 		</body>
 		</html>
 		`, this.serviceConfig.Name, this.serviceConfig.Target)
-	hp := strings.Split(host, ":")
+	hp := strings.Split(server, ":")
 	auth := smtp.PlainAuth("", user, password, hp[0])
 	content_type := "Content-Type: text/html; charset=UTF-8"
 
 	msg := []byte("To: " + strings.Join(this.config.Notifiers, ";") + "\r\nFrom: " + user + ">\r\nSubject: " + subject + "\r\n" + content_type + "\r\n\r\n" + body)
-	err := smtp.SendMail(host, auth, user, this.config.Notifiers, msg)
+	err := smtp.SendMail(server, auth, user, this.config.Notifiers, msg)
 	return err
 }
 

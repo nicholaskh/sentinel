@@ -16,7 +16,10 @@
 		{
 			name: "email_developer"
 			cmd: "email"
-			notifiers: ["zhangkaihong3@wanda.cn"]
+			server: "****.***.***:**"
+			user: "******@***.***"
+			pwd: "********"
+			notifiers: ["******@***.***"]
 		},
 	]
 }
