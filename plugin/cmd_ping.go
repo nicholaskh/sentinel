@@ -74,6 +74,7 @@ func (this *PingCommand) ping() (success bool) {
 	}
 	raddr, _ := net.ResolveUDPAddr("udp", this.target)
 	conn, err := net.DialUDP("udp", laddr, raddr)
+	defer conn.Close()
 	if err != nil {
 		log.Warn("dial target[%s] error: %s", this.target, err.Error())
 		return false
