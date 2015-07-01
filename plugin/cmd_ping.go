@@ -28,6 +28,7 @@ type PingCommand struct {
 	readTimeout         time.Duration
 	listenPort          int
 	notificationPlugins []engine.NotificationPlugin
+	localAddr           string
 }
 
 func (this *PingCommand) Init(config *config.ServiceConfig) {
@@ -36,6 +37,7 @@ func (this *PingCommand) Init(config *config.ServiceConfig) {
 	this.retryTimes = config.Retry
 	this.retryInterval = config.RetryInterval
 	this.readTimeout = config.ReadTimeout
+	this.localAddr = config.LocalAddr
 }
 
 func (this *PingCommand) SetNotificationPlugins(notificationPlugins []engine.NotificationPlugin) {
@@ -66,7 +68,12 @@ func (this *PingCommand) Start() {
 }
 
 func (this *PingCommand) ping() (success bool) {
-	conn, err := net.DialTimeout("udp", this.target, time.Second*10)
+	laddr, err := net.ResolveUDPAddr("udp", this.localAddr)
+	if err != nil {
+		laddr = nil
+	}
+	raddr, _ := net.ResolveUDPAddr("udp", this.target)
+	conn, err := net.DialUDP("udp", laddr, raddr)
 	if err != nil {
 		log.Warn("dial target[%s] error: %s", this.target, err.Error())
 		return false

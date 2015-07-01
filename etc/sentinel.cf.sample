@@ -8,6 +8,7 @@
 			retry: 3
 			retry_interval: "1s"
 			read_timeout: "2s"
+			local_addr: ":14569"
            			notification_cmds: ["email_developer"]
 		},
 	]

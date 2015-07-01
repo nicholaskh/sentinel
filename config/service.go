@@ -18,6 +18,8 @@ type ServiceConfig struct {
 	RetryInterval time.Duration
 	ReadTimeout   time.Duration
 
+	LocalAddr string
+
 	NotificationCmds []*NotificationConfig
 }
 
@@ -31,6 +33,8 @@ func (this *ServiceConfig) LoadConfig(cf *conf.Conf, notifications []*Notificati
 	this.Retry = cf.Int("retry", 5)
 	this.RetryInterval = cf.Duration("retry_interval", time.Second*1)
 	this.ReadTimeout = cf.Duration("read_timeout", time.Second*2)
+
+	this.LocalAddr = cf.String("local_addr", "")
 
 	this.NotificationCmds = make([]*NotificationConfig, 0)
 	for _, cmd := range cf.StringList("notification_cmds", []string{}) {
